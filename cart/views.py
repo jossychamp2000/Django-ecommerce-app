@@ -2,12 +2,13 @@ import datetime
 import json
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, reverse, redirect
 from django.views import generic
 from .forms import AddToCartForm, AddressForm
 from .utils import get_or_set_order_session
-from .models import Product, OrderItem, Address, Payment
+from .models import Product, OrderItem, Address, Payment, Order
 
 # Create your views here.
 
@@ -184,3 +185,9 @@ class ConfirmOrderView(generic.View):
 
 class ThankYouView(generic.TemplateView):
     template_name = 'cart/thanks.html'
+
+
+class OrderDetailView(LoginRequiredMixin, generic.DetailView):
+    template_name = 'order.html'
+    queryset = Order.objects.all()
+    context_object_name = 'order'
