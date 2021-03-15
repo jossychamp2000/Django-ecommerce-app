@@ -1,9 +1,13 @@
+import datetime
+import json
+from django.conf import settings
 from django.contrib import messages
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, reverse, redirect
 from django.views import generic
 from .forms import AddToCartForm, AddressForm
 from .utils import get_or_set_order_session
-from .models import Product, OrderItem, Address
+from .models import Product, OrderItem, Address, Payment
 
 # Create your views here.
 
@@ -92,12 +96,12 @@ class RemoveFromCartView(generic.View):
         return redirect("cart:summary")
 
 
-class CheckoutView(generic.Formview):
-    template_name = 'cart/Checkout.html'
+class CheckoutView(generic.FormView):
+    template_name = 'cart/checkout.html'
     form_class = AddressForm
 
     def get_success_url(self):
-        return reverse("home")
+        return reverse("cart:payment")
 
     def form_valid(self, form):
         order = get_or_set_order_session(self.request)
@@ -126,16 +130,17 @@ class CheckoutView(generic.Formview):
             address = Address.objects.create(
                 address_type='B',
                 user=self.request.user,
-                address_line_1=form.cleaned.data['shipping_address_line_1'],
-                address_line_2=form.cleaned.data['shipping_address_line_2'],
-                zip_code=form.cleaned.data['shipping_zip_code'],
-                city=form.cleaned.data['shipping_city'],
+                address_line_1=form.cleaned_data['billing_address_line_1'],
+                address_line_2=form.cleaned_data['billing_address_line_2'],
+                zip_code=form.cleaned_data['billing_zip_code'],
+                city=form.cleaned_data['billing_city'],
             )
-            order.shipping_address = address
+            order.billingg_address = address
+
         order.save()
         messages.info(
-            self.request(CheckView, self).form_valid(form)
-        )
+            self.request, "You have successfully added your addresses")
+        return super(CheckoutView, self).form_valid(form)
 
     def get_form_kwargs(self):
         kwargs = super(CheckoutView, self).get_form_kwargs()
@@ -146,3 +151,36 @@ class CheckoutView(generic.Formview):
         context = super(CheckoutView, self).get_context_data(**kwargs)
         context["order"] = get_or_set_order_session(self.request)
         return context
+
+
+class PaymentView(generic.TemplateView):
+    template_name = 'cart/payment.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(PaymentView, self).get_context_data(**kwargs)
+        context["PAYPAL_CLIENT_ID"] = settings.PAYPAL_CLIENT_ID
+        context['order'] = get_or_set_order_session(self.request)
+        context['CALLBACK_URL'] = self.request.build_absolute_uri(
+            reverse("cart:thank-you"))
+        return context
+
+
+class ConfirmOrderView(generic.View):
+    def post(self, request, *args, **kwargs):
+        order = get_or_set_order_session(request)
+        body = json.loads(request.body)
+        payment = Payment.objects.create(
+            order=order,
+            successful=True,
+            raw_response=json.dumps(body),
+            amount=float(body["purchase_units"][0]["amount"]["value"]),
+            payment_method='PayPal'
+        )
+        order.ordered = True
+        order.ordered_date = datetime.date.today()
+        order.save()
+        return JsonResponse({"data": "Success"})
+
+
+class ThankYouView(generic.TemplateView):
+    template_name = 'cart/thanks.html'
