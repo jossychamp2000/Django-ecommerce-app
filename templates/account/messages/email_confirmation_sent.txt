@@ -1,2 +1,3 @@
 {% load i18n %}
+{% load crispy_forms_tags %}
 {% blocktrans %}Confirmation e-mail sent to {{email}}.{% endblocktrans %}

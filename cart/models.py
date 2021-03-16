@@ -4,7 +4,6 @@ from django.db.models.signals import pre_save
 from django.shortcuts import reverse
 from django.utils.text import slugify
 
-
 User = get_user_model()
 
 
@@ -86,7 +85,7 @@ class OrderItem(models.Model):
         return self.quantity * self.product.price
 
     def get_total_item_price(self):
-        price = self.get_raw_total_item_price()
+        price = self.get_raw_total_item_price()  # 1000
         return "{:.2f}".format(price / 100)
 
 
@@ -122,7 +121,7 @@ class Order(models.Model):
     def get_raw_total(self):
         subtotal = self.get_raw_subtotal()
         # add tax, add delivery, subtract discounts
-        #total = subtoal - discounts + tax + delivery
+        # total = subtotal - discounts + tax + delivery
         return subtotal
 
     def get_total(self):

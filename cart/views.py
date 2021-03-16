@@ -7,10 +7,8 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, reverse, redirect
 from django.views import generic
 from .forms import AddToCartForm, AddressForm
-from .utils import get_or_set_order_session
 from .models import Product, OrderItem, Address, Payment, Order
-
-# Create your views here.
+from .utils import get_or_set_order_session
 
 
 class ProductListView(generic.ListView):
@@ -123,7 +121,6 @@ class CheckoutView(generic.FormView):
                 city=form.cleaned_data['shipping_city'],
             )
             order.shipping_address = address
-        order.save()
 
         if selected_billing_address:
             order.billing_address = selected_billing_address
@@ -136,7 +133,7 @@ class CheckoutView(generic.FormView):
                 zip_code=form.cleaned_data['billing_zip_code'],
                 city=form.cleaned_data['billing_city'],
             )
-            order.billingg_address = address
+            order.billing_address = address
 
         order.save()
         messages.info(
