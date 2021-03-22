@@ -28,4 +28,12 @@ urlpatterns = [
 
     path('orders/<pk>/',
          views.OrderDetailView.as_view(), name='order-detail'),
+
+    path('payment/stripe/', views.StripePaymentView.as_view(), name='payment-stripe'),
+
+    path('webhooks/stripe/', views.stripe_webhook_view, name='stripe-webhook'),
+
+
+
+
 ]
