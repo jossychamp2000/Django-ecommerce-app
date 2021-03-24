@@ -29,7 +29,6 @@ class AddToCartForm(forms.ModelForm):
         product_id = self.product_id
         product = Product.objects.get(id=self.product_id)
         quantity = self.cleaned_data['quantity']
-        print(quantity)
         if product.stock < quantity:
             raise forms.ValidationError(
                 f"The maximum stock is {product.stock}")
